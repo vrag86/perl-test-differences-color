@@ -1,6 +1,6 @@
 package Test::Differences::Color;
 
-use Sub::Override;
+use Test::Differences;
 use Term::ANSIColor qw(:constants);
 use Test::Builder::Formatter;
 
@@ -40,16 +40,23 @@ see L<Test::Differences>
 
 =cut
 
-my $orig_f = \&Test::Builder::Formatter::info_tap;
-*Test::Builder::Formatter::info_tap = sub {
-    my ($self, $f) = @_;
-    map {$_->{details} = _colorize($_->{details})} @{$f->{info}};
-    $orig_f->($self, $f);
-};
+sub eq_or_diff {
+    my (@args) = @_;
+    my(undef, $file, $line_num) = caller;
+
+    my $orig_f = \&Test::Builder::Formatter::info_tap;
+    *Test::Builder::Formatter::info_tap = sub {
+        my ($self, $f) = @_;
+        map {$_->{details} = _colorize($_->{details})} @{$f->{info}};
+        $orig_f->($self, $f);
+    };
+    my $return = Test::Differences::eq_or_diff(@args);
+    *Test::Bilder::Formatter = $orig_f;
+    return $return;
+}
 
 sub _colorize {
     my ($str) = @_;
-    $DB::single = 2;
     my @str_arr = split/\n/, $str;
     for my $s (@str_arr) {
         $s =~ s/^(\*.+\*)$/ON_RED . $1 . RESET/em ||
@@ -57,71 +64,6 @@ sub _colorize {
         $s =~ s/^(.+\*)$/ON_GREEN . $1 . RESET/em;
     }
     return join("\n", @str_arr);
-
-=pod
-    $str =~ s/^((\*).+(\*))$/$2 && $3 ? ON_RED . $1 . RESET : $1/mge;
-    elsif ($str =~ /^(\*.+)/m) {
-        $1 = ON_BLUE . $1 . RESET;
-    }
-    elsif ($str =~ /(.+\*)$/m) {
-        $1 = ON_GREEN . $1 . RESET;
-    }
-    return $str;
-=cut
-}
-
-sub eq_or_diff {
-    my (@args) = @_;
-    my(undef, $file, $line_num) = caller;
-
-    my $override = Sub::Override->new();
-    $override->replace('Test::Builder::_print_comment',
-        sub {
-            my( $self, $fh, @msgs ) = @_;
-
-            # Prevent printing headers when only compiling.  Mostly for when
-            # tests are deparsed with B::Deparse
-            return if $^C;
-
-            my $msg = join '', @msgs;
-
-            local( $\, $", $, ) = ( undef, ' ', '' );
-
-            # Escape each line after the first with a # so we don't
-            # confuse Test::Harness.
-            $msg =~ s{\n(?!\z)}{\n# }sg;
-
-            # Stick a newline on the end if it needs it.
-            $msg .= "\n" unless $msg =~ /\n\z/;
-
-            my @lines = split /\n/, $msg;
-
-            foreach my $line (@lines) {
-                my $match_start = $line =~ /^# \*/;
-                my $match_end   = $line =~ /\*$/;
-
-                if ($match_start && $match_end) {
-                    print $fh ON_RED, $line, RESET, "\n";
-                }
-                elsif ($match_start) {
-                    print $fh ON_BLUE, $line, RESET, "\n";
-                }
-                elsif ($match_end) {
-                    print $fh ON_GREEN, $line, RESET, "\n";
-                }
-                else {
-                    print $fh $line, "\n";
-                }
-            }
-
-            return;
-        },
-    );
-
-    require Test::Differences;
-    my $return = Test::Differences::eq_or_diff(@args);
-    $override->restore();
-    return $return;
 }
 
 =head1 SEE ALSO
@@ -130,7 +72,7 @@ L<Test::Differences>
 
 =head1 AUTHOR
 
-Alec Chen, C<< <alec at cpan.org> >>
+Pavel Andryushin <vrag867@gmail.com>
 
 =head1 BUGS
 
@@ -166,7 +108,7 @@ L<http://search.cpan.org/dist/Test-Differences-Color>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2008 Alec Chen, all rights reserved.
+Copyright 2022 Pavel Andryushin, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

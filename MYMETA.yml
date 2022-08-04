@@ -1,0 +1,31 @@
+---
+abstract: 'colorize the result of Test::Differences'
+author:
+  - 'Pavel Andryushin <vrag867@gmail.com>'
+build_requires:
+  ExtUtils::MakeMaker: '0'
+configure_requires:
+  ExtUtils::MakeMaker: '0'
+dynamic_config: 0
+generated_by: 'Module::Install version 0.91, CPAN::Meta::Converter version 2.150010'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: '1.4'
+name: Test-Differences-Color
+no_index:
+  directory:
+    - examples
+    - inc
+    - t
+requires:
+  Exporter: '5.63'
+  ExtUtils::MakeMaker: '6.42'
+  Sub::Override: '0.08'
+  Term::ANSIColor: '2.01'
+  Test::Differences: '0.4801'
+  Test::More: '0'
+resources:
+  license: http://dev.perl.org/licenses/
+version: '0.07'
+x_serialization_backend: 'CPAN::Meta::YAML version 0.018'
